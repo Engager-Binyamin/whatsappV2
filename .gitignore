@@ -1,0 +1,14 @@
+# Ignore all folders in node_modules
+node_modules/**
+
+# Except for files from whatsapp-web.js folder
+!node_modules/whatsapp-web.js/
+!node_modules/whatsapp-web.js/src/
+!node_modules/whatsapp-web.js/src/webCache/
+!node_modules/whatsapp-web.js/src/webCache/LocalWebCache.js
+
+.env
+session
+.wwebjs_auth\session
+.wwebjs_auth
+.wwebjs_cache
