@@ -8,74 +8,66 @@ let client;
 let id;
 
 async function getSession(clientId) {
-  let isSession = Boolean(clientId && clients[clientId])
-  if (isSession) {
-    client = new Client({
-      puppeteer: { headless: true, args: ["--no-sandbox"], },
-      authStrategy: new LocalAuth({ clientId })
-    });
+  // let isSession = Boolean(clientId && clients[clientId])
+  if (!clients[clientId]) sockets[clientId]?.emit("session", { code: 14, msg: "generate QR" })
 
-    client.on('auth_failure', (m) => {
-      console.log(m);
-    })
-    client.on('authenticated', (m) => {
-      console.log(m);
-    })
-    client.on("ready", () => {
-      console.log(`Client ${clientId} is ready!`);
-      client.isReady = true
-      clients[clientId] = client;
-      sockets[clientId].emit(`ready`);
-    });
-    client.on('disconnected', (reason) => {
-      console.error('Client disconnected:', reason);
-    });
-    client.on('message', (msg) => {
-      console.log('Received message:', msg.body);
-    });
-    if (client.isReady) {
-      client.bot.on("disconnected", (reason) => {
-        console.log(`Session disconnected for reason ${reason}`);
-      });
-    }
-    
-    client
-    .initialize()
-    .then(async t => {
-      console.log(" ###### then ######",t);
-    })
-    .catch((e) => {
-      console.log("######### catch initialize ##########\n",e);
-    });
-  }
-
-  return isSession;
-}
-
-async function generateQR(clientId) {
-  if (!clientId) throw "Client ID - ERROR";
   client = new Client({
-    puppeteer: { headless: true, args: ["--no-sandbox"], },
-    authStrategy: new LocalAuth({ clientId })
+    authStrategy: new LocalAuth({
+      clientId: clientId,
+      puppeteer: { unsafeMime: true }
+    }),
+    // puppeteer: {  unsafeMime: true  },
+    webVersion: '2.2411.2',
+    webVersionCache: {
+      type: 'remote',
+      remotePath: 'https://raw.githubusercontent.com/wppconnect-team/wa-version/main/html/2.2411.2.html',
+    }
   });
 
   client.on("qr", async (qr) => {
     console.log(`Request for QR code received for ${clientId}`);
     qrcode.generate(qr, { small: "true" });
-    sockets[clientId].emit("qr", qr)
+    sockets[clientId]?.emit("qr", qr)
   });
+
+  client.on('auth_failure', _ => {
+    // TODO: למחוק תיקייה מקומית
+    sockets[clientId]?.emit("session", { code: 15, msg: "auth failure" })
+  })
+  client.on('authenticated', _ => {
+    sockets[clientId]?.emit("session", { code: 10, msg: "authenticated" })
+  })
+
+  client.on("ready", () => {
+    console.log(`Client ${clientId} is ready!`);
+    client.isReady = true
+    clients[clientId] = client;
+    sockets[clientId]?.emit("session", { code: 11, msg: "ready" })
+  });
+
+  client.on('disconnected', (reason) => {
+    delete clients[clientId]
+    sockets[clientId]?.emit("session", { code: 16, msg: "disconnected" })
+
+    // TODO: לבדוק האם מדובר על התנתקות זמנית או לגמרי מחיקת סיישן עתידי
+    console.error('Client disconnected:', reason);
+  });
+
+  client.on('message', (msg) => {
+    console.log('Received message:', msg.body);
+  });
+
+  if (client.isReady) {
+    client.bot.on("disconnected", (reason) => {
+      console.log(`Session disconnected for reason ${reason}`);
+    });
+  }
 
   client
     .initialize()
-    .then(async t => {
-      console.log(t);
-    })
     .catch((e) => {
-      console.log(e);
+      console.log("######### catch initialize ##########\n", e);
     });
-
-  clients[clientId] = client
-  // sockets[clientId] = socket
 }
 
-module.exports = { generateQR,getSession };
+module.exports = { getSession };

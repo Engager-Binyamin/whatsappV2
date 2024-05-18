@@ -24,17 +24,20 @@ const io = new Server(server, {
 });
 
 io.on("connection", (socket) => {
-  id = socket.handshake?.auth?.userData?._id
+  let userData = socket.handshake?.auth?.userData,
+  id = userData?._id
   if (!id) return;
-  console.log("connection :", id);
-  if (localDB.sockets[id]) return;
+  console.log("new connection :", userData);
+  
   localDB.sockets[id] = socket
   // TODO : לבחון שימוש בחדר
   socket.join(id)
   
+  // if (localDB.sockets[id]) return;
+
   socket.on("disconnect", (reason) => {
     id = socket.handshake?.auth?.userData?._id
-    console.log("disconnect :", id || socket.id, ", reason:",reason);
+    console.log("disconnect :", id || socket.id, ", reason:", reason);
     if (id) delete localDB.sockets[id]
   })
 });

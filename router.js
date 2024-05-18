@@ -43,14 +43,5 @@ router.get("/session", authToken, async (req, res) => {
         res.status(400).send(err);
     }
 });
-router.get("/qr", authToken, async (req, res) => {
-    try {
-        await generateQR(req.body.user._id)
-        res.send()
-    }
-    catch (err) {
-        res.status(400).send(err);
-    }
-});
 
 module.exports = router;

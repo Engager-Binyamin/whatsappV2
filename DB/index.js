@@ -4,6 +4,7 @@ const MONGO_URL = process.env.MONGO_URL
 const data = {
     queue: require('./queue.model'),
     user: require('./user.model'),
+    campaign: require('./campaign.model'),
 }
 
 function getFunctions(entity, { create, update, updateById, read, readOne, readLast, del }) {
@@ -36,6 +37,9 @@ const db = {
     },
     get queue() {
         return getFunctions("queue", { read: true, readOne: true, create: true, del: true })
+    },
+    get campaign() {
+        return getFunctions("campaign", { read: true, readOne: true,updateById:true, create: true, update: true })
     },
     connect
 }
