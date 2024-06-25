@@ -3,7 +3,7 @@ const router = express.Router();
 const jwt = require("jsonwebtoken");
 const db = require("./DB");
 const { generateQR ,getSession} = require('./socket')
-
+const {sendMessage} = require('./sendMessage')
 const authToken = async (req, res, next) => {
     try {
         const originalToken = req.headers.authorization;
@@ -38,6 +38,16 @@ router.get("/session", authToken, async (req, res) => {
     try {
         let r = await getSession(req.body.user._id)
         res.send(r)
+    }
+    catch (err) {
+        res.status(400).send(err);
+    }
+});
+
+router.post("/send", authToken, async (req, res) => {
+    try {
+        await sendMessage(req.body)
+        res.sendStatus(201)
     }
     catch (err) {
         res.status(400).send(err);

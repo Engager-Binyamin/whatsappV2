@@ -2,10 +2,12 @@ const mongoose = require("mongoose");
 const msgQueueSchema = new mongoose.Schema({
     userId:{
         type: mongoose.Types.ObjectId,
+        ref:"user",
         required: true
     },
     campaignId:{
         type: mongoose.Types.ObjectId,
+        ref:"campaign",
         required: true
     },
     contentMsg:{
@@ -29,5 +31,5 @@ const msgQueueSchema = new mongoose.Schema({
     //     enum: ['isActive', 'isAwait', 'isTiming', 'isFinish']
     // }
 });
-const msgQueueModel = mongoose.model("msgQueue", msgQueueSchema);
+const msgQueueModel = mongoose.model("queue", msgQueueSchema);
 module.exports = msgQueueModel;

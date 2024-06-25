@@ -1,3 +1,3 @@
 
 
-module.exports = { sockets : {}, clients : {} };
+module.exports = { sockets : {}, clients : {}, intervals : {}};

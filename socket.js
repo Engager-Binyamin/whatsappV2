@@ -9,18 +9,22 @@ let id;
 
 async function getSession(clientId) {
   // let isSession = Boolean(clientId && clients[clientId])
+
+  if (clients[clientId] && clients[clientId].isReady) { sockets[clientId]?.emit("session", { code: 11, msg: "Ready" }); return; }
   if (!clients[clientId]) sockets[clientId]?.emit("session", { code: 14, msg: "generate QR" })
 
+  const webVersion = '2.2412.54'
   client = new Client({
     authStrategy: new LocalAuth({
       clientId: clientId,
       puppeteer: { unsafeMime: true }
     }),
-    // puppeteer: {  unsafeMime: true  },
-    webVersion: '2.2411.2',
+    puppeteer: { args: ['--incognito','--no-sandbox', '--disable-setuid-sandbox'] },
+    // webVersion: '2.2411.2',
+    webVersion: webVersion,
     webVersionCache: {
       type: 'remote',
-      remotePath: 'https://raw.githubusercontent.com/wppconnect-team/wa-version/main/html/2.2411.2.html',
+      remotePath: `https://raw.githubusercontent.com/wppconnect-team/wa-version/main/html/${webVersion}.html`,
     }
   });
 
