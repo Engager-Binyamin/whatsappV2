@@ -9,7 +9,7 @@ const receivedMsg = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ["created", "sent", "received"],
+    enum: ["created", "sent", "received","read"],
     default: "created",
 
   },

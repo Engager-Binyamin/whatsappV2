@@ -129,7 +129,7 @@ async function startSendMessage(userId) {
       let msg = queue[userId][0]
       console.log(`Interval for ${userId}, send msg to lead : ${msg.leadId}`);
       let isSent = await sendMessageWhatsapp(msg)
-      if(!isSent) return; 
+      if (!isSent) return;
       // ###### שים לב #######
       // אם ההודעה לא נשלחה, היא לא מוסרת מרשימת ההמתנה בדאטהבייס, מתור העבודה
       // ובעוד 5 שניות - ינסו שוב לשלוח אותה. 
@@ -167,40 +167,50 @@ async function sendMessageWhatsapp(data) {
 
     const ackListener = async (msg, ack) => {
       console.log("MESSAGE SENT", "from:", msg.from, "to:", msg.to, "id:", msg.id.id, "ack:", msg.ack);
-      return;
 
-      // בקטע קוד הבא, מעדכנים על מצב ההודעה - נשלחה,התקבלה או נקראה
-      // אם רוצים לאפשר קוד זה, להסיר את ה-return
       const campaign = await db.campaign.readOne({ _id: data.campaignId });
-      let received = campaign?.receivedMsgs?.find(re => String(re._id) == String(newData.receivedId));
-      if (!received || msg.id.id != messageId) return;
+      let received = campaign?.receivedMsgs?.find(re => re.leadId == data.leadId && re.msgId == messageId);
+      if (!received) {
+        campaign.receivedMsgs.push({
+          leadId: data.leadId,
+          msgId: messageId
+        })
+        await campaign.save();
+        received = campaign?.receivedMsgs?.find(re => re.leadId == data.leadId && re.msgId == messageId);
+      }
 
       let log = `Message with ID ${messageId} was `
-      if (ack === 1) {
-        log += "sent";
-        received.status = "sent";
-        received.sentData = Date.now();
-        campaign.save();
-      } else if (ack === 2) {
-        log += `received by ${chatId}`
-        received.status = "received";
-        campaign.save();
-      } else if (ack === 3) {
-        log += `read by ${chatId}`
-        // received.status = 'read'
-        // campaign.save()
-      } else {
-        console.log("ack isn't 1/2/3");
+      switch (ack) {
+        case 1:
+          log += "sent";
+          received.status = "sent";
+          received.sentData = Date.now();
+          break;
+        case 2:
+          log += `received by ${chatId}`
+          received.status = "received";
+          break;
+        case 3:
+          log += `read by ${chatId}`
+          received.status = 'read'
+          break;
+        default:
+          console.log("ack isn't 1/2/3");
+          break;
       }
+      campaign.save()
+      console.log(log);
     };
     client.on("message_ack", ackListener);
 
-    client.destroy();
     sentMessage = await client.sendMessage(chatId, data.contentMsg);
 
     // #### אם קיים מדיה בהודעה #####
     let media = data.file && await MessageMedia.fromUrl(data.file);
     if (media) await client.sendMessage(chatId, media);
+
+    // TODO: create receivedMsg in camp model
+
 
     // Remove the event listeners after sending the message
     client.off("message_send", sendListener);

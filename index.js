@@ -30,8 +30,6 @@ io.on("connection", (socket) => {
   console.log("new connection :", userData);
   
   localDB.sockets[id] = socket
-  // TODO : לבחון שימוש בחדר
-  socket.join(id)
   
   // if (localDB.sockets[id]) return;
 
